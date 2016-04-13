@@ -1,0 +1,267 @@
+---
+title: ''
+author: ''
+date: ''
+output: html_document
+---
+
+```{r setup, include=FALSE}
+setwd("~/Downloads/project4-team-8-master/lib")
+library(dplyr)
+library(tidyr)
+library(wordcloud)
+library(tm)
+library(httr)
+library(rvest)
+library(reshape)
+library(biclust)
+library(s4vd)
+load("train.RData")
+load("test.RData")
+load("cluster_data2.RData")
+```
+
+#2 Biclustering
+
+Biclustering is an important new technique in two way data analysis. With biclustering, we can do simultaneous clustering of 2 dimensions; Large datasets where clustering leads to diffuse results; Only parts of the data inﬂuence each other.
+
+##2.1 Biclustering based on user id and product id:
+
+First of all, we do biclustering based on user id and product id. Due to concerns about memory and running time, we extract a subset from the original dataset. For movies (403), those that are reviewed by experts and have more than 35 reviews are selected. For user id (2486), only reviewers who have watched the above movies are chosen. 
+
+To creating the sparse matrix, user id represents rows, and product id represents columns. If user i gives review score 5 to product j, then the entry (i,j) would be 1, if user i gives review score below 5 to product j, then the entry (i,j) would be -1, if user i hasn't given a review to product j, then the entry (i,j) would be 0. 
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+base <- train
+base.red <- base[,c("product_productid","review_userid","review_score")]
+matrix <- cast(data = base.red,review_userid~product_productid,fun.aggregate = mean,value = "review_score",fill=0)
+
+M <- data.frame(matrix)
+M <- as.matrix(M[,-1])
+
+M_test <- M
+for (i in 1:nrow(M_test)) {
+        for (j in 1:ncol(M_test)) {
+                if (M_test[i,j] < 5 & M_test[i,j]>0) {
+                        M_test[i,j]=-1
+                }
+                else if (M_test[i,j] == 5) {
+                        M_test[i,j]=1
+                }
+        }
+}
+set.seed(12)
+res1 <- biclust(M_test, method=BCs4vd(), iter=10000,nbiclust=10,col.overlap=F)
+BCheatmap(M_test,res1)
+```
+
+We also can use parallelCoordinates plot to see every cluster's characteristics. Just show first 4 as examples.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+par(mfrow=c(2,2))
+parallelCoordinates(M_test,res1, 1)
+title("Cluster 1")
+parallelCoordinates(M_test,res1, 2)
+title("Cluster 2")
+parallelCoordinates(M_test,res1, 3)
+title("Cluster 3")
+parallelCoordinates(M_test,res1, 4)
+title("Cluster 4")
+```
+
+So far, we can give a recommendation system according to this approach. For example, if user "A17IW44FV0HUTY" wants to find some recommendations, we will firstly locate his/her cluster, second we select all movies that are in this cluster and haven't been watched by user "A17IW44FV0HUTY", and then we recommend top n (n is a customized number of recommendations, for instance, n=3) movies based on average review socre.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+set1 <- cluster_data2[, c(1,8,2,6)]
+
+input <- "A17IW44FV0HUTY"
+index <- grep(input, matrix$review_userid)
+cl <- grep("TRUE", res1@RowxNumber[index,])
+clusteri <- M_test[as.logical(apply(res1@RowxNumber[,cl], 1, max)), as.logical(apply(res1@NumberxCol[cl,], 2, max))]
+
+recommend <- filter(set1, product_productid %in% colnames(clusteri) & !review_userid %in% input)
+recommend <- aggregate(review_score~product_name, data = recommend, mean) %>% arrange(desc(review_score))
+
+recommend_new <- recommend[1,1]
+for (i in 2:nrow(recommend)) {
+        new <- strsplit(recommend[i,1],"")[[1]]
+        old <- strsplit(recommend_new[length(recommend_new)],"")[[1]]
+        if (sum(new[1:4]==old[1:4])<4) {
+                recommend_new <- c(recommend_new, recommend[i,1])
+        }
+        
+}
+```
+
+Finally, we have the results.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+recommend_new[1:3]
+```
+
+On the other hand, if one user likes movie "B00000I4XR", which is "Jaws", again, we will firstly locate its cluster, second we select all other movies that are in this cluster, and then we recommend top n (n is a customized number of recommendations, for instance, n=3) movies based on average review socre.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+sub_input <- train$product_productid[1]
+index <- grep(sub_input, colnames(M_test))
+cl <- grep("TRUE", res1@NumberxCol[,index])
+clusteri <- M_test[res1@RowxNumber[,cl],res1@NumberxCol[cl,]]
+recommend <- filter(set1, product_productid %in% colnames(clusteri))
+recommend <- aggregate(review_score~product_name, data = recommend, mean) %>%
+        arrange(desc(review_score))
+
+recommend_new <- recommend[1,1]
+for (i in 2:nrow(recommend)) {
+        new <- strsplit(recommend[i,1],"")[[1]]
+        old <- strsplit(recommend_new[length(recommend_new)],"")[[1]]
+        if (sum(new[1:4]==old[1:4])<4) {
+                recommend_new <- c(recommend_new, recommend[i,1])
+        }
+        
+}
+
+old <- strsplit(train$product_name[1],"")[[1]]
+
+recommend_new_final <- NULL
+for (j in 1:length(recommend_new)) {
+        new <- strsplit(recommend_new[j],"")[[1]]
+        if (sum(new[1:4]==old[1:4])<4) {
+                recommend_new_final <- c(recommend_new_final, recommend_new[j])
+        }
+}
+```
+
+We now have the results.
+
+```{r}
+recommend_new_final[1:3]
+```
+
+##2.2 Biclustering based on actors' and directors' names and product id:
+
+Second, we do biclustering based on actors and directors and product id. Also, since the dataset is too large, we extract a subset with last 1000 movies and first 1000 actors from the original dataset. 
+
+To creating the sparse matrix, actors' names represent rows, and product id represents columns. If actor i performed in movie j, then the entry (i,j) would be 1, otherwise would be 0.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+product <- readRDS("product.RDS")
+actor <- NULL
+for (i in 6:10) {
+        actor <- c(actor, unique(product[,i]))
+}
+director <- unique(product$product_director)
+name <- c(actor, director)
+name <- unique(name)
+delete <- c(grep("\\d", name),grep("\\,", name),grep("\\&", name), grep("\\/", name))
+name <- name[-delete]
+save <- grep(" ", name)
+name <- name[save]
+
+unique_id <- as.data.frame(table(product$Var1))
+op2 <- as.data.frame(matrix(0, length(name), nrow(unique_id)))
+colnames(op2) <- unique_id$Var1
+rownames(op2) <- name
+
+op2_test <- op2[1:1000,(ncol(op2)-999):ncol(op2)]
+for (j in 1:ncol(op2_test)) {
+        one_product <- filter(product, Var1==colnames(op2_test)[j])
+        for (i in 1:nrow(op2_test)) {
+                if (rownames(op2_test)[i] %in% one_product[,5:10]) {
+                        op2_test[i,j]=1
+                }
+                
+        }
+}
+
+op2_test <- as.matrix(op2_test)
+res2 <- biclust(op2_test, method=BCs4vd(), iter=10000,nbiclust=10,col.overlap=F)
+
+BCheatmap(op2_test,res2)
+#bubbleplot(op2_test,res2, showLabels=TRUE)
+```
+
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+par(mfrow=c(2,2))
+parallelCoordinates(op2_test,res2, 1)
+title("Cluster 1")
+parallelCoordinates(op2_test,res2, 2)
+title("Cluster 2")
+parallelCoordinates(op2_test,res2, 3)
+title("Cluster 3")
+parallelCoordinates(op2_test,res2, 4)
+title("Cluster 4")
+```
+
+
+So far, we can give a recommendation system according to this approach. For example, if one user inputs a movie that he/she likes. Again, we will firstly locate its cluster, second we select all movies that are in this cluster, and then we recommend top n (n is a customized number of recommendations, for instance, n=3) movies based on average review socre.
+
+For example, if the input movie id is "B0093ICOE0", which is "Watchmen Collector's Edition: Ultimate Cut + Graphic Novel [Blu-ray]", then let's see what we'll get.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+set2 <- cluster_data2[, c(1,8,6)]
+
+input <- "B00004RX91"
+input <- train$product_productid[nrow(train)]
+index <- grep(input, colnames(op2_test))
+cl <- grep("TRUE", res2@NumberxCol[,index])
+clusteri <- op2_test[res2@RowxNumber[,cl], res2@NumberxCol[cl,]]
+
+recommend <- filter(set2, product_productid %in% colnames(clusteri))
+recommend <- aggregate(review_score~product_name, data = recommend, mean) %>% arrange(desc(review_score))
+
+recommend_new <- recommend[1,1]
+for (i in 2:nrow(recommend)) {
+        new <- strsplit(recommend[i,1],"")[[1]]
+        old <- strsplit(recommend_new[length(recommend_new)],"")[[1]]
+        if (sum(new[1:4]==old[1:4])<4) {
+                recommend_new <- c(recommend_new, recommend[i,1])
+        }
+        
+}
+#rep <- c(grep("\\[", recommend$product_name), grep("\\(", recommend$product_name))
+#recommend <- recommend[-rep,]
+
+```
+
+Finally, we have the results.
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+recommend_new[1:3]
+```
+
+#2.3 Word cloud of popular actors and directors
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+top_actor <- as.data.frame(apply(op2_test, 1, sum))
+colnames(top_actor) <- "freq"
+top_actor$name <- rownames(top_actor)
+top_actor <- arrange(top_actor, freq) %>% filter(freq>5)
+
+op_director <- filter(top_actor, name %in% director)
+op_actor <- filter(top_actor, name %in% actor, !name %in% director)
+
+pal1 <- brewer.pal(8,"Blues")
+pal2 <- brewer.pal(8,"Reds")
+
+wordcloud(op_director$name, op_director$freq,scale=c(3,.2),min.freq=10,max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal1)
+title("Wordcloud of Directors")
+wordcloud(op_actor$name, op_actor$freq, scale=c(2,.2),min.freq=15,max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal2)
+title("Wordcloud of Actors")
+```
+
+#2.4 Recomendation Algorithm 2 & 3:
+  This recommendation algorithm based on biclustering. Intuitively, the results should share some similarities with the input (They are in the same cluster).
+  
+  Advantage:
+  1. do simultaneous clustering of 2 dimensions
+  2. large datasets where clustering leads to diffuse results
+  3. only parts of the data inﬂuence each other
+  
+  Disadvantage:
+  1. slow, but not the slowest one
+  2. not stable, need to tune parameters of the model
+
+
+
+
