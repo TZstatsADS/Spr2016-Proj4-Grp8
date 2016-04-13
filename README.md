@@ -1,6 +1,6 @@
 # Project 4 Users Analysis and Movie Recommendation
 
-###In this project, we explored the relational [data](http://snap.stanford.edu/data/web-Movies.html) from  Amazon movie reviews. Two main tasks that we carry on are recommending users and recommending movies. First, we explored the relationship between users aiming at recommending users who were trustworthy and professional. Second, we developed movie recommendation systems with three different algorithms and made an comparison and evaluation. 
+In this project, we explored the relational [data](http://snap.stanford.edu/data/web-Movies.html) from  Amazon movie reviews. Two main tasks that we carry on are recommending users and recommending movies. First, we explored the relationship between users aiming at recommending users who were trustworthy and professional. Second, we developed movie recommendation systems with three different algorithms and made an comparison and evaluation. 
 
 
 Team 8 Members:   
