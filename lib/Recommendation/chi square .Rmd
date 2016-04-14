@@ -1,9 +1,9 @@
 ---
-title: "Chi-Squarred Method for Recommendation "
-output: pdf_document
+title: '3 Chi-Squarred Method for Recommendation '
+output: html_document
 ---
 
-# $\chi^2$ Applied to Common Reviewers
+# 3.1 $\chi^2$ Applied to Common Reviewers
 
 This recommendation method is based on the $\chi^2$ statistic for independence of rows and columns in a contingency table. The main idea is to generate a contingency table based on common reviewers of two particular movies. This is constructed based on a binary variable **liked**, which can take the value L (liked movie) and N (not liked movie). An L is assigned for review scores equal to 5, and N is assigned otherwise. The contingency table is created by crossing this variable for movie i and movie j. 
 
@@ -33,7 +33,7 @@ contingency.table
 chisq.test(contingency.table)$statistic
 ```
 
-For cases with a strong row and column dependence, a high value of the $\chi^2$ is expected. It is important to note that strong dependence could have two meanings. The first one, that users who reviewed both movies agree most of the time, i.e., the majority either liked both or disliked both. The example shown before is a case of this. There is a second case of strong dependence where the users most of the time disagree, i.e., they liked one of the movies but disliked the other. The following is an example of this case:
+For cases with a strong row and column dependence, a high value of the $\chi^2$ is expected. It is important to note that strong dependence could have two meanings. The first one, that users who reviewed both movies agree most of the time, i.e., the majority either liked both or disliked both. The first example that was shown is a case of this. There is a second case of strong dependence where the users most of the time disagree, i.e., they liked one of the movies but disliked the other. The following is an example of this case:
 
 ```{r include=FALSE}
 # create fake example
@@ -51,18 +51,20 @@ Note that both examples show a large $\chi^2$, however they have a different int
 
 $$ LL+NN>NL+LN $$
 
-# Recommendation Tool
+# 3.2 Recommendation Tool
 
 The recommendation tool is currently implemented as an R function, however it could easily be implemented in a shiny app. $\chi^2$ values were computed as described before for each pair of movies in the training sample and saved in a data frame called PairChi. The user should give as a first input the movie id of one of their favorite movies. The second input is n, the number of recommnedations that want to be retreived. The function will extract from PairChi the $\chi^2$ values corresponding to the input movie and the rest of the movies, they will be ranked and then a function will eliminate repetions (for example if there's a Titanic VHS and Titanic DVD only the first one will be considered). The first n movies will be recommended to the user. The following is an example of this:
 
-```{r include=FALSE}
 
+```{r eval=FALSE}
+return.name("B00004TX12")
+chi.sqr.recommendation("B00004TX12",5)
 ```
 
-
-```{r}
-# chi.sqr.recommendation("B00004TX12",5)
-# return.name("B00004TX12")
+```{r echo=FALSE}
+print("Watchmen Collector's Edition: Ultimate Cut + Graphic Novel [Blu-ray]")
+load("/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/data/rec_chi_example.RData")
+chi.example
 ```
 
 
