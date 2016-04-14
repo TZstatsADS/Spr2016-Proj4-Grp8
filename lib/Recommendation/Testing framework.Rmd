@@ -1,0 +1,30 @@
+---
+title: "4 Model Evaluation and Recommendation Example"
+output: html_document
+---
+
+# 4.1 Train and Test Samples
+
+A training sample of 40,589 observations, containing 403 movies and 2,481 users, was used to train all of the recommendation tools. A testing sample of 40,353 observations, containing 403 movies and 2,481 users, was used to evaluate our recommendation tools.
+
+# 4.2 Model Evaluation Framework
+
+The evaluation framework is based on a testing sample of 40,353 observations, containing 403 movies and 2,481 users . The following table is an example of the evaluation framework:
+
+![](/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/doc/auxiliar/example_test.png)
+
+This table is created for each method. The first column is all of the possible inputs from which the user can choose their favorite movie. The second column is the movie recommended by Method 1. To explain the third column let's focus on the first example. If the user chooses Titanic, the recommended movie would be The Notebook. From the test sample we take all the users who liked Titanic and also reviewed The Notebook and compute the average score they gave to The Notebook. Then the average of all of the rows is computed to get an overall score of the recommendation method. We do this for our three recommendation tools and compare. 
+
+# 4.3 Evaluaton Results
+
+![](/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/doc/auxiliar/testing results.png)
+
+The Biclustering and Chi-square methods are very close, however the biclustering is a little bit better. 
+
+# 4.4 Recommendation Example
+
+This is an example of what the three methods would recommend if the input movie is "Watchmen movie" which is a movie based on a DC comic.
+
+![](/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/doc/auxiliar/comparison_matrix.jpg)
+
+There are some similarities between these movies. There are some "superheroes movies" recommended such as "Ironman" and "Superman". We can also see that some are are action movies like "V for Vendetta". Many of this movies can also be categorized as "Good vs Bad Guys" movies.  

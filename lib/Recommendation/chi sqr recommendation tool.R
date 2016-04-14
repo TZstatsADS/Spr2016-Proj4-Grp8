@@ -95,7 +95,7 @@ test.average <- function(data.base,movie1,movie2){
      rev1 <- sapply(mutual.reviewers, function(x) extract.review(data.base,movie1,x))
      rev2 <- sapply(mutual.reviewers, function(x) extract.review(data.base,movie2,x))
      names.like <-   names(subset(rev1,rev1==5))
-     if (length(names.like)<2){
+     if (length(names.like)<3){
        NA
      } else{
        other.average <- mean(subset(rev2,names(rev2)%in%names.like))
@@ -197,19 +197,36 @@ save(PairChi,file = "/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data 
 chi.sqr.recommendation <- function(movie,number){
   temp.distance <- PairChi[PairChi$movie1==movie,]
   temp.distance <- temp.distance[order(temp.distance$chi,decreasing = T),c("name2","chi")]
-  temp.distance <- deleting.repeated(recommend = temp.distance,name = return.name("B0093ICOE0"))
+  temp.distance <- deleting.repeated(recommend = temp.distance,name = return.name(movie))
   return(head(temp.distance,number))
 }
 
-return.name(products[2])
-chi.sqr.recommendation(products[2],5)
+
+return.name(products[1])
+chi.sqr.recommendation(products[1],5)
 
 return.name(products[3])
 chi.sqr.recommendation(products[3],5)
 
 
 return.name("B0093ICOE0")
-chi.sqr.recommendation("B0093ICOE0",20)
+chi.sqr.recommendation("B0093ICOE0",3)
+
+chi.example <- chi.sqr.recommendation("B0093ICOE0",3)
+save(chi.example,file="/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/data/rec_chi_example.RData")
+
+##    RECOMMENDATION LIST 
+##________________________________________________________________________________________
+##________________________________________________________________________________________
+
+for (i in products){
+  if (i==products[1]) {
+    rec.list <- data.frame(name1=return.name(i),chi.sqr.recommendation(i,1))
+  } else {
+    rec.list <- rbind(rec.list,data.frame(name1=return.name(i),chi.sqr.recommendation(i,1)))
+  }
+}
+save(rec.list,file="/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/data/chi_rec_list.RData")
 
 ##    COMPUTE TEST METRICS 
 ##________________________________________________________________________________________
@@ -221,5 +238,12 @@ chi.sqr.recommendation("B0093ICOE0",20)
 t0 <- proc.time()
 test.averages <- ddply(.data = movie.pairs.train,.variables = .(movie1,movie2),.fun = function(x) bridge.test(test,x),.progress="text")
 proc.time()-t0
-write.csv(test.averages,"/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/data/PairChi.csv")
+names(test.averages)[3] <- "average"
+temp.2 <- movie.names
+names(temp.2) <- c("movie1","name1")
+test.averages2 <- merge(test.averages,temp.2,by.x="movie1")
+temp.2 <- movie.names
+names(temp.2) <- c("movie2","name2")
+test.averages2 <- merge(test.averages2,temp.2,by.x="movie2")
+save(test.averages2,file="/Users/JPC/Documents/Columbia/2nd Semester/1. Applied Data Science/2. Homeworks/Project 4/project4-team-8/data/test_data.RData")
 
