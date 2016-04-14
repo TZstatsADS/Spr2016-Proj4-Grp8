@@ -13,7 +13,7 @@ Jadie Zuo (xz2467@columbia.edu)
  
 Presentation: http://prezi.com/jsanool9k4pc/?utm_campaign=share&utm_medium=copy&rc=ex0share
 
-Please see all the results in output folder.
+Please see all the results in doc folder.
 
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
