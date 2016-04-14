@@ -1,9 +1,10 @@
-# Project 4 Users Analysis and Movie Recommendation
+# Project 4: Users Analysis and Movie Recommendation
  
-In this project, we explored the relational [data](http://snap.stanford.edu/data/web-Movies.html) from  Amazon movie reviews. Two main tasks that we carry on are recommending users and recommending movies. First, we explored the relationship between users aiming at recommending users who were trustworthy and professional. Second, we developed movie recommendation systems with three different algorithms and made an comparison and evaluation. 
+In this project, we explored the relational [data](http://snap.stanford.edu/data/web-Movies.html) from  Amazon movie reviews. Two main tasks that we carry on are *recommending users* and *recommending movies*. First, we explored the relationship between users aiming at recommending users who are trustworthy and professional. Second, we developed three movie recommendation systems based on different methods: bipartite network, biclustering using the chi-square for independence statistic. We compare the results given by the three approaches. 
 
 
-Team 8 Members:   
+Team 8 Members:
+
 Juan Pablo Campos Gutierrez (jc4499@columbia.edu)  
 Yuhan Sun (ys2883@columbia.edu)  
 Yusen Wang (yw2812@columbia.edu)  
